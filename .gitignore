@@ -1,0 +1,6 @@
+*.png
+*.json
+!config_example.json
+*.ini
+!config_example.ini
+*.txt

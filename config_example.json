@@ -1,0 +1,56 @@
+{
+    "jira": {
+        "allowed_project_keys": [],
+        "ignored_link_type_name": [
+            "Blocks"
+        ],
+        "ignored_statuses": [
+            "Closed"
+        ],
+        "links": {
+            "excludes": [],
+            "ignored_type_statuses": [
+                "Done"
+            ]
+        },
+        "url": "https://myjira.com"
+    },
+    "layout": {
+        "defaults": {
+            "boxStyle": "filled,dashed",
+            "fillColor": "white",
+            "fontName": "Arial",
+            "wordWrap": true
+        },
+        "legend": "Updated: {0} UTC"
+    },
+    "overrides": {
+        "0": {
+            "matchRules": [
+                {
+                    "type": "has_label",
+                    "value": "demo-label"
+                }
+            ],
+            "layout": {
+                "boxStyle": "filled,dashed",
+                "fillColor": "orange"
+            }
+        },
+        "1": {
+            "matchRules": [
+                {
+                    "type": "key_in",
+                    "value": [
+                        "DEMO-123",
+                        "DEMO-124"
+                    ]
+                }
+            ],
+            "layout": {
+                "boxStyle": "filled,solid",
+                "fillColor": "deepskyblue"
+            }
+        }
+    }
+}
