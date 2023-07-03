@@ -434,17 +434,19 @@ def main():
         config["jira"]["links"]["excludes"] = []
 
     # layout config defaults
-    # FIXME merge the loaded config with defaults, this only sets default if config is empty
     if "layout" not in config:
-        config["layout"] = {
-            "defaults": {
-                "boxStyle": "filled",
-                "fillColor": "white",
-                "fontName": "Arial",
-                "nodeShape": "box",
-                "wordWrap": True,
-            }
-        }
+        config["layout"] = {}
+    else:
+        if "defaults" not in config["layout"]:
+            config["layout"]["defaults"] = {}
+
+        config["layout"]["defaults"] = {
+            "boxStyle": "filled",
+            "fillColor": "white",
+            "fontName": "Arial",
+            "nodeShape": "box",
+            "wordWrap": True,
+        } | config["layout"]["defaults"]
 
     DotGenerator(config, jira, options.issues).generate_graph(
         options.image_file_name, print_only=options.no_image
