@@ -10,79 +10,13 @@ import re
 import requests
 from functools import reduce
 from datetime import datetime
+from jira_tools.config import load_config
+from jira_tools.search import JiraSearch
+
+from jira_tools.logging import log
 
 # FIXME move to props
 MAX_SUMMARY_LENGTH = 30
-
-
-def log(*args):
-    print(*args, file=sys.stderr)
-
-
-class JiraSearch:
-    """This factory will create the actual method used to fetch issues from JIRA. This is really just a closure that
-    saves us having to pass a bunch of parameters all over the place all the time."""
-
-    __base_url = None
-    __issues = {}
-
-    def __init__(self, url):
-        self.__base_url = url
-        self.url = url + "/rest/api/latest"
-        self.fields = ",".join(
-            [
-                "key",
-                "summary",
-                "status",
-                "description",
-                "issuetype",
-                "issuelinks",
-                "subtasks",
-                "labels",
-            ]
-        )
-
-    def get(self, uri, params={}):
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer {}".format(os.environ["JIRA_ACCESS_TOKEN"]),
-        }
-        url = self.url + uri
-        return requests.get(url, params=params, headers=headers, verify=True)
-
-    def get_issue(self, key):
-        if key not in self.__issues:
-            """Given an issue key (i.e. JRA-9) return the JSON representation of it. This is the only place where we deal
-            with JIRA's REST API."""
-            # log("Fetching " + key)
-            # we need to expand subtasks and links since that's what we care about here.
-            response = self.get("/issue/%s" % key, params={"fields": self.fields})
-            response.raise_for_status()
-
-            # FIXME could also persist to a file if a config says so
-            # print("#" * 100)
-            # print(response.text)
-            # print("#" * 100)
-
-            self.__issues[key] = response.json()
-
-        return self.__issues[key]
-
-    def query(self, query):
-        log("Querying " + query)
-        response = self.get("/search", params={"jql": query, "fields": self.fields})
-        content = response.json()
-        return content["issues"]
-
-    def list_ids(self, query):
-        log("Querying " + query)
-        response = self.get(
-            "/search", params={"jql": query, "fields": "key", "maxResults": 100}
-        )
-        return [issue["key"] for issue in response.json()["issues"]]
-
-    def get_issue_uri(self, issue_key):
-        return self.__base_url + "/browse/" + issue_key
 
 
 # FIXME move to config file? at least the more complex ones
@@ -165,11 +99,6 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_config(config_file):
-    with open(config_file) as config_file:
-        return json.loads(config_file.read())
-
-
 class JiraTraversal:
     def __init__(self, config: dict, jira: JiraSearch):
         self.config = config
@@ -206,15 +135,8 @@ class JiraTraversal:
             log("Skipping " + issue_key + " - not traversing to blacklisted project3")
             return
 
-        # print(issue)
-
-        print(
-            "{} - {}: {}".format(
-                issue["fields"]["issuetype"]["name"],
-                issue_key,
-                issue["fields"]["summary"],
-            )
-        )
+        summary = issue["fields"]["summary"]
+        print(f"{issue_key}: {summary}")
 
         # check the links of the issue
         if "issuelinks" in issue["fields"]:
@@ -291,15 +213,19 @@ class JiraTraversal:
             # FIXME for the children case the linked_issue_key is needed from the caller of this method
             return
         else:
-            issue_type = linked_issue["fields"]["issuetype"]["name"]
             summary = linked_issue["fields"]["summary"]
             estimation = self.__get_estimation(linked_issue["fields"]["description"])
+            status = linked_issue["fields"]["status"]["name"]
+            # FIXME configurable
+            # print(f"  > {linked_issue_key:}: {estimation}")
             print(
-                f"  {link_type} -> {issue_type} - {linked_issue_key:}: {summary: <{110}} {estimation}"
+                f"{linked_issue_key:}: {summary: <{110}} {estimation: <{10}} {status}"
             )
+            # print(f"{linked_issue_key:};{summary};{estimation}")
 
+    # FIXME make configurable
     def __get_estimation(self, description):
-        regex = r"h3. Estimation(['SLMX']{1,3})"
+        regex = r"h3. Estimation(['-SLMX']{1,4})"
         m = re.search(
             regex,
             description.replace("\n", "").replace("\r", ""),
@@ -310,6 +236,7 @@ class JiraTraversal:
         return "Unknown"
 
 
+# FIXME would need a config to only include specific link type instead of blacklisting all unwanted
 def main():
     options = parse_args()
 

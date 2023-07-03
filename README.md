@@ -113,6 +113,7 @@ Defines the basic layout of the drawn issues. Can be overwritten by the `rules` 
   * `boxStyle` (`string`) style of the drawn boxes, `dot` notation, also see [`style docs of dot`](https://graphviz.org/docs/attrs/style/)
   * `fillColor` (`string`) fill color of the box, find possible color values [here](https://graphviz.org/doc/info/colors.html)
   * `fontName` (`string`) name of the font, according to `dot`, see [here](https://graphviz.org/docs/attrs/fontname/)
+  * `nodeShape` (`string`) which shape to use for the nodes (`circle`, `box`, `ellipse`, etc.) - default: `box`
   * `wordWrap` (`boolean`) if to break the summary of an issue over multiple lines (`true`) or if to cut off after 30 characters ( `false`)
 * `legend` a legend that is rendered under the graph
   * you can use the placeholder `{0}` to insert the generation time of the graph, e.g. `Updated: {0} UTC`

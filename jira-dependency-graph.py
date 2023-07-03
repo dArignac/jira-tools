@@ -5,83 +5,17 @@ import json
 import sys
 import graphviz
 import textwrap
+from jira_tools.config import load_config
+from jira_tools.search import JiraSearch
 
 import requests
 from functools import reduce
 from datetime import datetime
 
+from jira_tools.logging import log
+
 # FIXME move to props
 MAX_SUMMARY_LENGTH = 30
-
-
-def log(*args):
-    print(*args, file=sys.stderr)
-
-
-class JiraSearch:
-    """This factory will create the actual method used to fetch issues from JIRA. This is really just a closure that
-    saves us having to pass a bunch of parameters all over the place all the time."""
-
-    __base_url = None
-    __issues = {}
-
-    def __init__(self, url):
-        self.__base_url = url
-        self.url = url + "/rest/api/latest"
-        self.fields = ",".join(
-            [
-                "key",
-                "summary",
-                "status",
-                "description",
-                "issuetype",
-                "issuelinks",
-                "subtasks",
-                "labels",
-            ]
-        )
-
-    def get(self, uri, params={}):
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer {}".format(os.environ["JIRA_ACCESS_TOKEN"]),
-        }
-        url = self.url + uri
-        return requests.get(url, params=params, headers=headers, verify=True)
-
-    def get_issue(self, key):
-        if key not in self.__issues:
-            """Given an issue key (i.e. JRA-9) return the JSON representation of it. This is the only place where we deal
-            with JIRA's REST API."""
-            # log("Fetching " + key)
-            # we need to expand subtasks and links since that's what we care about here.
-            response = self.get("/issue/%s" % key, params={"fields": self.fields})
-            response.raise_for_status()
-
-            # FIXME could also persist to a file if a config says so
-            # print("#" * 100)
-            # print(response.text)
-            # print("#" * 100)
-
-            self.__issues[key] = response.json()
-
-        return self.__issues[key]
-
-    def query(self, query):
-        log("Querying " + query)
-        response = self.get("/search", params={"jql": query, "fields": self.fields})
-        content = response.json()
-        return content["issues"]
-
-    def list_ids(self, query):
-        log("Querying " + query)
-        response = self.get(
-            "/search", params={"jql": query, "fields": "key", "maxResults": 100}
-        )
-        return [issue["key"] for issue in response.json()["issues"]]
-
-    def get_issue_uri(self, issue_key):
-        return self.__base_url + "/browse/" + issue_key
 
 
 class DotGenerator:
@@ -95,7 +29,7 @@ class DotGenerator:
         self.jira = jira
         self.issues_list = issues_list
 
-    def create_image(self, graph_data, image_file_name, node_shape, keep_dot_file):
+    def __create_image(self, graph_data, image_file_name, node_shape, keep_dot_file):
         legend = ""
         if "legend" in self.config["layout"]:
             legend = 'label=<{}>;fontname="{}";\n'.format(
@@ -114,7 +48,7 @@ class DotGenerator:
 
         return image_file_name
 
-    def generate(self) -> list:
+    def __generate(self) -> list:
         for issue_key in self.issues_list:
             self.__create_dot_for_jira_issue(issue_key)
         return self.graph
@@ -372,23 +306,25 @@ class DotGenerator:
             fontName=self.config["layout"]["defaults"]["fontName"],
         )
 
+    def generate_graph(self, image_file_name, print_only=False, keep_dot_file=False):
+        g = self.__generate()
 
-def print_graph(graph_data, node_shape):
-    print(
-        "digraph{\nnode [shape=" + node_shape + "];\n\n%s\n}" % ";\n".join(graph_data)
-    )
+        # FIXME this should be done based on JIRA data only, not on the formatted dot data
+        # graph = filter_duplicates(graph)
 
-
-def filter_duplicates(lst):
-    if len(lst) == 0:
-        return lst
-
-    # Enumerate the list to restore order lately; reduce the sorted list; restore order
-    def append_unique(acc, item):
-        return acc if acc[-1][1] == item[1] else acc.append(item) or acc
-
-    srt_enum = sorted(enumerate(lst), key=lambda i_val: i_val[1])
-    return [item[1] for item in sorted(reduce(append_unique, srt_enum, [srt_enum[0]]))]
+        if print_only:
+            print(
+                "digraph{\nnode [shape="
+                + self.config["layout"]["defaults"]["nodeShape"]
+                + "];\n\n%s\n}" % ";\n".join(g)
+            )
+        else:
+            self.__create_image(
+                g,
+                image_file_name,
+                self.config["layout"]["defaults"]["nodeShape"],
+                keep_dot_file,
+            )
 
 
 # FIXME move to config file? at least the more complex ones
@@ -439,13 +375,6 @@ def parse_args():
         help="JQL search for issues (e.g. 'project = JRADEV')",
     )
     parser.add_argument(
-        "-ns",
-        "--node-shape",
-        dest="node_shape",
-        default="box",
-        help="which shape to use for nodes (circle, box, ellipse, etc)",
-    )
-    parser.add_argument(
         "-t",
         "--ignore-subtasks",
         action="store_true",
@@ -469,11 +398,6 @@ def parse_args():
         help="Path to JSON config file",
     )
     return parser.parse_args()
-
-
-def load_config(config_file):
-    with open(config_file) as config_file:
-        return json.loads(config_file.read())
 
 
 # FIXME be able to filter out linked issues based on JIRA fields or project
@@ -510,32 +434,21 @@ def main():
         config["jira"]["links"]["excludes"] = []
 
     # layout config defaults
+    # FIXME merge the loaded config with defaults, this only sets default if config is empty
     if "layout" not in config:
         config["layout"] = {
             "defaults": {
                 "boxStyle": "filled",
                 "fillColor": "white",
                 "fontName": "Arial",
+                "nodeShape": "box",
                 "wordWrap": True,
             }
         }
 
-    dot_generator = DotGenerator(config, jira, options.issues)
-    graph = dot_generator.generate()
-
-    # FIXME this should be done based on JIRA data only, not on the formatted dot data
-    # graph = filter_duplicates(graph)
-
-    # FIXME move to DotGenerator
-    if options.no_image:
-        print_graph(graph, options.node_shape)
-    else:
-        dot_generator.create_image(
-            graph,
-            options.image_file_name,
-            options.node_shape,
-            options.keep_dot_file,
-        )
+    DotGenerator(config, jira, options.issues).generate_graph(
+        options.image_file_name, print_only=options.no_image
+    )
 
 
 if __name__ == "__main__":

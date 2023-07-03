@@ -20,6 +20,7 @@
             "boxStyle": "filled,dashed",
             "fillColor": "white",
             "fontName": "Arial",
+            "nodeShape": "box",
             "wordWrap": true
         },
         "legend": "Updated: {0} UTC"
