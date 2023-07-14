@@ -9,7 +9,7 @@
         ],
         "links": {
             "excludes": [],
-            "ignored_type_statuses": [
+            "ignored_statuses": [
                 "Done"
             ]
         },

@@ -71,7 +71,7 @@ Handles JIRA specific configuration.
         "Closed"
     ],
     "links": {
-        "ignored_type_statuses": [
+        "ignored_statuses": [
             "Done"
         ]
     },
@@ -88,7 +88,7 @@ Handles JIRA specific configuration.
 * `ignored_statuses`
   * if any found issue, that is not a link, matches the list of ignored statuses, then the issue is ignored
 * `links` - handling of the links of an issue (links are found in the result list based on the given ticket or JQL)
-  * `ignored_type_statuses`
+  * `ignored_statuses`
     * links whose status match any of the given statuses are ignored
 * `url` to JIRA instance
   * **mandatory**

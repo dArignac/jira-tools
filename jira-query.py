@@ -184,7 +184,7 @@ class JiraTraversal:
         # skip ignored statuses of links
         if ("inwardIssue" in link) and (
             link["inwardIssue"]["fields"]["status"]["name"]
-            in self.config["jira"]["links"]["ignored_type_statuses"]
+            in self.config["jira"]["links"]["ignored_statuses"]
         ):
             log(
                 "Skipping "
@@ -194,7 +194,7 @@ class JiraTraversal:
             return
         if ("outwardIssue" in link) and (
             link["outwardIssue"]["fields"]["status"]["name"]
-            in self.config["jira"]["links"]["ignored_type_statuses"]
+            in self.config["jira"]["links"]["ignored_statuses"]
         ):
             log(
                 "Skipping "
@@ -263,8 +263,8 @@ def main():
     # links config defaults
     if "links" not in config["jira"]:
         config["jira"]["links"] = {}
-    if "ignored_type_statuses" not in config["jira"]["links"]:
-        config["jira"]["links"]["ignored_type_statuses"] = []
+    if "ignored_statuses" not in config["jira"]["links"]:
+        config["jira"]["links"]["ignored_statuses"] = []
     if "excludes" not in config["jira"]["links"]:
         config["jira"]["links"]["excludes"] = []
 
