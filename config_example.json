@@ -1,7 +1,7 @@
 {
     "jira": {
         "allowed_project_keys": [],
-        "ignored_link_type_name": [
+        "ignored_link_type_names": [
             "Blocks"
         ],
         "ignored_statuses": [

@@ -141,7 +141,8 @@ class DotGenerator:
 
     def __handle_issue_link(self, issue_key, issue_fields, link):
         # don't handle the link if it is an ignored one
-        if link["type"]["name"] in self.config["jira"]["ignored_link_type_name"]:
+        # log(link["type"]["name"])
+        if link["type"]["name"] in self.config["jira"]["ignored_link_type_names"]:
             return
 
         # FIXME move to config
@@ -228,7 +229,7 @@ class DotGenerator:
 
             # create the edge between the linked issue and the original one
             node = '{}->{}[label="{}"{}]'.format(
-                # FIXME we already have that node create, have we?
+                # FIXME we already have that node created, have we?
                 self.__create_node_for_issue(
                     issue_key,
                     issue_fields,
@@ -297,6 +298,7 @@ class DotGenerator:
                 if issue_key in match_rule["value"]:
                     match_count += 1
             elif match_rule["type"] == "status_in":
+                # log(issue_key + " - " + issue_fields["status"]["name"])
                 if issue_fields["status"]["name"] in match_rule["value"]:
                     match_count += 1
 
@@ -425,8 +427,8 @@ def main():
     if "ignored_statuses" not in config["jira"]:
         config["jira"]["ignored_statuses"] = []
 
-    if "ignored_link_type_name" not in config["jira"]:
-        config["jira"]["ignored_link_type_name"] = []
+    if "ignored_link_type_names" not in config["jira"]:
+        config["jira"]["ignored_link_type_names"] = []
 
     # links config defaults
     if "links" not in config["jira"]:

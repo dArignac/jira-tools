@@ -64,7 +64,7 @@ Handles JIRA specific configuration.
 ```
 "jira": {
     "allowed_project_keys": [],
-    "ignored_link_type_name": [
+    "ignored_link_type_names": [
         "Blocks"
     ],
     "ignored_statuses": [
@@ -83,7 +83,7 @@ Handles JIRA specific configuration.
   * list of allowed JIRA project keys
   * any found issue (either in JQL query or in linked issue of the given issue or JQL) that does not match the list is ignored
   * if empty, then all JIRA projects are allowed
-* `ignored_link_type_name`
+* `ignored_link_type_names`
   * in the links of an issue, links matching the **name** of the type of link are ignored
 * `ignored_statuses`
   * if any found issue, that is not a link, matches the list of ignored statuses, then the issue is ignored

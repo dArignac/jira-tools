@@ -146,7 +146,7 @@ class JiraTraversal:
     def __handle_link(self, link):
         # FIXME copied
         # don't handle the link if it is an ignored one
-        if link["type"]["name"] in self.config["jira"]["ignored_link_type_name"]:
+        if link["type"]["name"] in self.config["jira"]["ignored_link_type_names"]:
             return
 
         # FIXME copied
@@ -257,8 +257,8 @@ def main():
     if "ignored_statuses" not in config["jira"]:
         config["jira"]["ignored_statuses"] = []
 
-    if "ignored_link_type_name" not in config["jira"]:
-        config["jira"]["ignored_link_type_name"] = []
+    if "ignored_link_type_names" not in config["jira"]:
+        config["jira"]["ignored_link_type_names"] = []
 
     # links config defaults
     if "links" not in config["jira"]:
