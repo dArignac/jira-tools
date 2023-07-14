@@ -162,6 +162,8 @@ Rule definition:
         * checks if the issue has a label as given in `value`
       * `key_in`
         * checks if the issue's key matches any of the issue keys given in `value` (`list` of `string`)
+      * `status_in`
+        * check if the status matches the given status value list in `value` (`list` of `string`)
 * `layout` (`object`) to define the layout which will be used instead of the default layout
   * same keys as in `layout`.`defaults` can be defined
 

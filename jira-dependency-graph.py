@@ -296,6 +296,9 @@ class DotGenerator:
             elif match_rule["type"] == "key_in":
                 if issue_key in match_rule["value"]:
                     match_count += 1
+            elif match_rule["type"] == "status_in":
+                if issue_fields["status"]["name"] in match_rule["value"]:
+                    match_count += 1
 
         return match_count_expected == match_count
 
