@@ -204,11 +204,6 @@ class JiraTraversal:
             return
 
         # FIXME copied
-        if link_type in self.config["jira"]["links"]["excludes"]:
-            # FIXME for the children case the linked_issue_key is needed from the caller of this method
-            return
-
-        # FIXME copied
         if direction not in self.config["jira"]["show_directions"]:
             # FIXME for the children case the linked_issue_key is needed from the caller of this method
             return
@@ -253,6 +248,7 @@ def main():
     config["jira"]["issue_excludes"] = options.issue_excludes
     config["jira"]["show_directions"] = options.show_directions
 
+    # FIXME copied
     # default configs
     if "ignored_statuses" not in config["jira"]:
         config["jira"]["ignored_statuses"] = []
@@ -265,8 +261,6 @@ def main():
         config["jira"]["links"] = {}
     if "ignored_statuses" not in config["jira"]["links"]:
         config["jira"]["links"]["ignored_statuses"] = []
-    if "excludes" not in config["jira"]["links"]:
-        config["jira"]["links"]["excludes"] = []
 
     jt = JiraTraversal(config, jira)
     for issue_key in options.issues:

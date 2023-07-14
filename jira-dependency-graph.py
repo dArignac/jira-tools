@@ -199,10 +199,6 @@ class DotGenerator:
             )
             return
 
-        if link_type in self.config["jira"]["links"]["excludes"]:
-            # FIXME for the children case the linked_issue_key is needed from the caller of this method
-            return
-
         # arrow = " => " if direction == "outward" else " <= "
         # log(issue_key + arrow + link_type + arrow + linked_issue_key)
 
@@ -435,8 +431,6 @@ def main():
         config["jira"]["links"] = {}
     if "ignored_statuses" not in config["jira"]["links"]:
         config["jira"]["links"]["ignored_statuses"] = []
-    if "excludes" not in config["jira"]["links"]:
-        config["jira"]["links"]["excludes"] = []
 
     # layout config defaults
     layout_defaults = {
