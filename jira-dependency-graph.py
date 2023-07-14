@@ -434,11 +434,19 @@ def main():
         config["jira"]["links"]["excludes"] = []
 
     # layout config defaults
+    layout_defaults = {
+        "boxStyle": "filled",
+        "fillColor": "white",
+        "fontName": "Arial",
+        "nodeShape": "box",
+        "wordWrap": True,
+    }
+
     if "layout" not in config:
-        config["layout"] = {}
+        config["layout"] = {"defaults": layout_defaults}
     else:
         if "defaults" not in config["layout"]:
-            config["layout"]["defaults"] = {}
+            config["layout"]["defaults"] = layout_defaults
 
         config["layout"]["defaults"] = {
             "boxStyle": "filled",
