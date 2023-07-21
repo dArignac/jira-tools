@@ -1,19 +1,20 @@
 import os
 import requests
 
-from jira_tools.logging import log
+from jira_tools.logging import Logging
 
 
-class JiraSearch:
+class JiraSearch(Logging):
     """This factory will create the actual method used to fetch issues from JIRA. This is really just a closure that
     saves us having to pass a bunch of parameters all over the place all the time."""
 
     __base_url = None
     __issues = {}
 
-    def __init__(self, url):
-        self.__base_url = url
-        self.url = url + "/rest/api/latest"
+    def __init__(self, config: dict, options: dict):
+        self.config = config
+        self.options = options
+        self.url = self.config["jira"]["url"] + "/rest/api/latest"
         self.fields = ",".join(
             [
                 "key",
@@ -54,13 +55,13 @@ class JiraSearch:
         return self.__issues[key]
 
     def query(self, query):
-        log("Querying " + query)
+        self.log("Querying " + query)
         response = self.get("/search", params={"jql": query, "fields": self.fields})
         content = response.json()
         return content["issues"]
 
     def list_ids(self, query):
-        log("Querying " + query)
+        self.log("Querying " + query)
         response = self.get(
             "/search", params={"jql": query, "fields": "key", "maxResults": 100}
         )

@@ -24,6 +24,13 @@ class ConfigAndOptions:
             default=False,
             help="Render graphviz code to stdout instead of generating an image.",
         )
+        parser.add_argument(
+            "--debug",
+            action="store_true",
+            dest="debug",
+            default=False,
+            help="if to output additional log messages.",
+        )
         # FIXME review args from here
         # FIXME move to config file
         parser.add_argument(

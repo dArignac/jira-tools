@@ -1,5 +1,7 @@
 import sys
 
 
-def log(*args):
-    print(*args, file=sys.stderr)
+class Logging:
+    def log(self, message):
+        if self.options.debug:
+            print(message, file=sys.stderr)

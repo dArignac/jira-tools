@@ -12,7 +12,7 @@ import graphviz
 import requests
 
 from jira_tools.config import ConfigAndOptions
-from jira_tools.logging import log
+from jira_tools.logging import Logging
 from jira_tools.search import JiraSearch
 
 # FIXME move to props
@@ -99,9 +99,11 @@ def parse_args():
     return parser.parse_args()
 
 
-class JiraTraversal:
-    def __init__(self, config: dict, jira: JiraSearch):
+class JiraTraversal(Logging):
+    def __init__(self, config: dict, options: dict, jira: JiraSearch):
+        // FIXME init can be extracted
         self.config = config
+        self.options = options
         self.jira = jira
 
     # FIXME copied
@@ -122,7 +124,7 @@ class JiraTraversal:
         # FIXME block copied
         # filter out if the status of the issue is an ignored one
         if issue["fields"]["status"]["name"] in self.config["jira"]["ignored_statuses"]:
-            log(
+            self.log(
                 "Skipping {} as its status {} is ignored".format(
                     issue_key, issue["fields"]["status"]["name"]
                 )
@@ -132,7 +134,9 @@ class JiraTraversal:
         # FIXME block copied
         # if the issue does not belong to the allowed JIRA projects, then skip it
         if not self.__belongs_to_allowed_project(issue_key):
-            log("Skipping " + issue_key + " - not traversing to blacklisted project3")
+            self.log(
+                "Skipping " + issue_key + " - not traversing to blacklisted project3"
+            )
             return
 
         summary = issue["fields"]["summary"]
@@ -167,7 +171,7 @@ class JiraTraversal:
         # FIXME copied
         # if the issue does not belong to the allowed JIRA projects, then skip it
         if not self.__belongs_to_allowed_project(linked_issue_key):
-            log(
+            self.log(
                 "Skipping linked issue "
                 + linked_issue_key
                 + " - not traversing to blacklisted project"
@@ -177,7 +181,7 @@ class JiraTraversal:
         # FIXME copied
         # skip the link if excluded via config
         if linked_issue_key in self.config["jira"]["issue_excludes"]:
-            log("Skipping " + linked_issue_key + " - explicitly excluded")
+            self.log("Skipping " + linked_issue_key + " - explicitly excluded")
             return
 
         # FIXME copied
@@ -186,7 +190,7 @@ class JiraTraversal:
             link["inwardIssue"]["fields"]["status"]["name"]
             in self.config["jira"]["links"]["ignored_statuses"]
         ):
-            log(
+            self.log(
                 "Skipping "
                 + linked_issue_key
                 + " - linked key is ignored as its status is ignored"
@@ -196,7 +200,7 @@ class JiraTraversal:
             link["outwardIssue"]["fields"]["status"]["name"]
             in self.config["jira"]["links"]["ignored_statuses"]
         ):
-            log(
+            self.log(
                 "Skipping "
                 + linked_issue_key
                 + " - linked key is ignored as its status is ignored"
@@ -241,7 +245,7 @@ def main():
     if options.jql_query is not None:
         options.issues.extend(jira.list_ids(options.jql_query))
 
-    jt = JiraTraversal(config, jira)
+    jt = JiraTraversal(config, options, jira)
     for issue_key in options.issues:
         jt.print_issue(issue_key)
 

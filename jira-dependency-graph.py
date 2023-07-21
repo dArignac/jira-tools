@@ -11,23 +11,24 @@ import graphviz
 import requests
 
 from jira_tools.config import ConfigAndOptions
-from jira_tools.logging import log
+from jira_tools.logging import Logging
 from jira_tools.search import JiraSearch
 
 # FIXME move to props
 MAX_SUMMARY_LENGTH = 30
 
 
-class DotGenerator:
+class DotGenerator(Logging):
     # FIXME not sure if really needed, old code is disabled where that applies
     seen_issue_keys = []
     graph = []
     added_issue_keys = []
 
-    def __init__(self, config: dict, jira: JiraSearch, issues_list: list):
+    def __init__(self, config: dict, options: dict, jira: JiraSearch):
         self.config = config
+        self.options = options
         self.jira = jira
-        self.issues_list = issues_list
+        self.issues_list = self.options.issues
 
     def __create_image(self, graph_data, image_file_name, node_shape, keep_dot_file):
         legend = ""
@@ -76,7 +77,7 @@ class DotGenerator:
 
         # filter out if the status of the issue is an ignored one
         if issue["fields"]["status"]["name"] in self.config["jira"]["ignored_statuses"]:
-            log(
+            self.log(
                 "Skipping {} as its status {} is ignored".format(
                     issue_key, issue["fields"]["status"]["name"]
                 )
@@ -85,7 +86,9 @@ class DotGenerator:
 
         # if the issue does not belong to the allowed JIRA projects, then skip it
         if not self.__belongs_to_allowed_project(issue_key):
-            log("Skipping " + issue_key + " - not traversing to blacklisted project3")
+            self.log(
+                "Skipping " + issue_key + " - not traversing to blacklisted project3"
+            )
             return
 
         # add the dot node for the issue
@@ -104,7 +107,7 @@ class DotGenerator:
         #         issues = jira.query('"Epic Link" = "%s"' % issue_key)
         #         for subtask in issues:
         #             subtask_key = get_key(subtask)
-        #             log(subtask_key + " => references epic => " + issue_key)
+        #             self.log(subtask_key + " => references epic => " + issue_key)
         #             node = "{}->{}[color=orange]".format(
         #                 create_node_text(issue_key, fields),
         #                 create_node_text(subtask_key, subtask["fields"]),
@@ -114,7 +117,7 @@ class DotGenerator:
         #     if "subtasks" in fields and not ignore_subtasks:
         #         for subtask in fields["subtasks"]:
         #             subtask_key = get_key(subtask)
-        #             log(issue_key + " => has subtask => " + subtask_key)
+        #             self.log(issue_key + " => has subtask => " + subtask_key)
         #             node = '{}->{}[color=blue][label="subtask"]'.format(
         #                 create_node_text(issue_key, fields),
         #                 create_node_text(subtask_key, subtask["fields"]),
@@ -129,7 +132,7 @@ class DotGenerator:
 
                 # FIXME only needed if we walk the children later, see below - the return from __handle_issue_link was removed!
                 # if link_issue_key is not None:
-                #     # log("Appending " + link_issue_key)
+                #     # self.log("Appending " + link_issue_key)
                 #     children.append(link_issue_key)
 
         # FIXME disable for now, would again query everything for every linked issue, is the only one using seen_issue_keys
@@ -141,7 +144,7 @@ class DotGenerator:
 
     def __handle_issue_link(self, issue_key, issue_fields, link):
         # don't handle the link if it is an ignored one
-        # log(link["type"]["name"])
+        # self.log(link["type"]["name"])
         if link["type"]["name"] in self.config["jira"]["ignored_link_type_names"]:
             return
 
@@ -165,7 +168,7 @@ class DotGenerator:
 
         # if the issue does not belong to the allowed JIRA projects, then skip it
         if not self.__belongs_to_allowed_project(linked_issue_key):
-            log(
+            self.log(
                 "Skipping linked issue "
                 + linked_issue_key
                 + " - not traversing to blacklisted project"
@@ -174,7 +177,7 @@ class DotGenerator:
 
         # skip the link if excluded via config
         if linked_issue_key in self.config["jira"]["issue_excludes"]:
-            log("Skipping " + linked_issue_key + " - explicitly excluded")
+            self.log("Skipping " + linked_issue_key + " - explicitly excluded")
             return
 
         # skip ignored statuses of links
@@ -182,7 +185,7 @@ class DotGenerator:
             link["inwardIssue"]["fields"]["status"]["name"]
             in self.config["jira"]["links"]["ignored_statuses"]
         ):
-            log(
+            self.log(
                 "Skipping "
                 + linked_issue_key
                 + " - linked key is ignored as its status is ignored"
@@ -192,7 +195,7 @@ class DotGenerator:
             link["outwardIssue"]["fields"]["status"]["name"]
             in self.config["jira"]["links"]["ignored_statuses"]
         ):
-            log(
+            self.log(
                 "Skipping "
                 + linked_issue_key
                 + " - linked key is ignored as its status is ignored"
@@ -200,7 +203,7 @@ class DotGenerator:
             return
 
         # arrow = " => " if direction == "outward" else " <= "
-        # log(issue_key + arrow + link_type + arrow + linked_issue_key)
+        # self.log(issue_key + arrow + link_type + arrow + linked_issue_key)
 
         extra = ',fontname="{}"'.format(self.config["layout"]["defaults"]["fontName"])
         # FIXME to be configured
@@ -294,7 +297,7 @@ class DotGenerator:
                 if issue_key in match_rule["value"]:
                     match_count += 1
             elif match_rule["type"] == "status_in":
-                # log(issue_key + " - " + issue_fields["status"]["name"])
+                # self.log(issue_key + " - " + issue_fields["status"]["name"])
                 if issue_fields["status"]["name"] in match_rule["value"]:
                     match_count += 1
 
@@ -333,13 +336,13 @@ class DotGenerator:
 def main():
     config, options = ConfigAndOptions().get_config_and_options()
 
-    jira = JiraSearch(config["jira"]["url"])
+    jira = JiraSearch(config, options)
 
     # if a jql query was given, fetch all issues of it and add it to the issues list
     if options.jql_query is not None:
         options.issues.extend(jira.list_ids(options.jql_query))
 
-    DotGenerator(config, jira, options.issues).generate_graph(
+    DotGenerator(config, options, jira).generate_graph(
         options.image_file_name, print_only=options.no_image
     )
 
