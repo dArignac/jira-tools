@@ -346,6 +346,7 @@ def parse_args():
         help="Render graphviz code to stdout instead of generating an image.",
     )
     # FIXME review args from here
+    # FIXME move to config file
     parser.add_argument(
         "-xi",
         "--issue-exclude",

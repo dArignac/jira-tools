@@ -28,7 +28,13 @@ $ pip install -r requirements.txt
 
 To communicate with JIRA an access token with **read** permissions is required. The token has to be provided in the environment variable `JIRA_ACCESS_TOKEN`.
 
-### Configuration
+### Workflow
+
+The primary query is either the JIRA ticket or the JQL you are giving. For the JQL case, all found tickets will be visualized, you can filter them through the configuration.
+
+The term **link** is used for any ticket that is in relation to a ticket of the primary query.
+
+### Configuration file
 
 Each call requires a JSON config file, given with the `--config-file` option in the CLI call. Check the [`config_example.json`](./config_example.json) for a sample file.
 
