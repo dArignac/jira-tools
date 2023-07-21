@@ -101,7 +101,7 @@ def parse_args():
 
 class JiraTraversal(Logging):
     def __init__(self, config: dict, options: dict, jira: JiraSearch):
-        // FIXME init can be extracted
+        # FIXME init can be extracted
         self.config = config
         self.options = options
         self.jira = jira
@@ -239,7 +239,7 @@ class JiraTraversal(Logging):
 def main():
     config, options = ConfigAndOptions().get_config_and_options()
 
-    jira = JiraSearch(config["jira"]["url"])
+    jira = JiraSearch(config, options)
 
     # if a jql query was given, fetch all issues of it and add it to the issues list
     if options.jql_query is not None:
