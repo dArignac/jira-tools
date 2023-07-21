@@ -1,19 +1,19 @@
 #!/usr/bin/env python
-import os
 import argparse
 import json
-import sys
-import graphviz
-import textwrap
+import os
 import re
-
-import requests
-from functools import reduce
+import sys
+import textwrap
 from datetime import datetime
-from jira_tools.config import load_config
-from jira_tools.search import JiraSearch
+from functools import reduce
 
+import graphviz
+import requests
+
+from jira_tools.config import ConfigAndOptions
 from jira_tools.logging import log
+from jira_tools.search import JiraSearch
 
 # FIXME move to props
 MAX_SUMMARY_LENGTH = 30
@@ -233,34 +233,13 @@ class JiraTraversal:
 
 # FIXME would need a config to only include specific link type instead of blacklisting all unwanted
 def main():
-    options = parse_args()
-
-    # FIXME use json schema and have some docs
-    config = load_config(options.config_file)
+    config, options = ConfigAndOptions().get_config_and_options()
 
     jira = JiraSearch(config["jira"]["url"])
 
     # if a jql query was given, fetch all issues of it and add it to the issues list
     if options.jql_query is not None:
         options.issues.extend(jira.list_ids(options.jql_query))
-
-    # map cli params into config
-    config["jira"]["issue_excludes"] = options.issue_excludes
-    config["jira"]["show_directions"] = options.show_directions
-
-    # FIXME copied
-    # default configs
-    if "ignored_statuses" not in config["jira"]:
-        config["jira"]["ignored_statuses"] = []
-
-    if "ignored_link_type_names" not in config["jira"]:
-        config["jira"]["ignored_link_type_names"] = []
-
-    # links config defaults
-    if "links" not in config["jira"]:
-        config["jira"]["links"] = {}
-    if "ignored_statuses" not in config["jira"]["links"]:
-        config["jira"]["links"]["ignored_statuses"] = []
 
     jt = JiraTraversal(config, jira)
     for issue_key in options.issues:
