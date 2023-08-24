@@ -300,6 +300,19 @@ class DotGenerator(Logging):
                 # self.log(issue_key + " - " + issue_fields["status"]["name"])
                 if issue_fields["status"]["name"] in match_rule["value"]:
                     match_count += 1
+            elif match_rule["type"] == "field_value":
+                field_name = match_rule["value"]["field"]
+                field_value = match_rule["value"]["value"]
+                field_type = match_rule["value"]["field_type"]
+
+                if field_name in issue_fields and issue_fields[field_name] is not None:
+                    if field_type == "list":
+                        # the field is a list, therefore get the values only
+                        field_values = list(
+                            map(lambda v: v["name"], issue_fields[field_name])
+                        )
+                        if field_value in field_values:
+                            match_count += 1
 
         return match_count_expected == match_count
 

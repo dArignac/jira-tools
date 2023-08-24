@@ -26,6 +26,7 @@ class JiraSearch(Logging):
                 "subtasks",
                 "labels",
             ]
+            + self.config["jira"]["additional_fields"]
         )
 
     def get(self, uri, params={}):

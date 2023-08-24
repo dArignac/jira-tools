@@ -85,6 +85,9 @@ Handles JIRA specific configuration.
 }
 ```
 
+* `additional_fields`:
+  * list of JIRA fields to additionally query
+  * this is only necessary if you use fields in the `field_value` matching rule of the overrides (see below) and if this fields are not included in the default JIRA query (which fetches the fields `key`, `summary`, `status`, `description`, `issuetype`, `issuelinks`,`subtasks`, `labels`)
 * `allowed_project_keys`
   * list of allowed JIRA project keys
   * any found issue (either in JQL query or in linked issue of the given issue or JQL) that does not match the list is ignored
@@ -170,6 +173,13 @@ Rule definition:
         * checks if the issue's key matches any of the issue keys given in `value` (`list` of `string`)
       * `status_in`
         * check if the status matches the given status value list in `value` (`list` of `string`)
+      * `field_value`
+        * checks if a particular field has a value
+        * the implementation separates between the different types of values, as there can be single or multiple values for a field
+        * the `value` has to be an object with the following keys
+          * `field` - name of the field to compare
+          * `value` - the value to match
+          * `field_type` - what kind the field is, currently only supported is `list` for a field that can have a list of values
 * `layout` (`object`) to define the layout which will be used instead of the default layout
   * same keys as in `layout`.`defaults` can be defined
 

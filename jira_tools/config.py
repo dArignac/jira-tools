@@ -105,6 +105,9 @@ class ConfigAndOptions:
         if "ignored_link_type_names" not in config["jira"]:
             config["jira"]["ignored_link_type_names"] = []
 
+        if "additional_fields" not in config["jira"]:
+            config["jira"]["additional_fields"] = []
+
         # links config defaults
         if "links" not in config["jira"]:
             config["jira"]["links"] = {}
