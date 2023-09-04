@@ -69,6 +69,7 @@ Handles JIRA specific configuration.
 
 ```
 "jira": {
+    "additional_fields": [],
     "allowed_project_keys": [],
     "ignored_link_type_names": [
         "Blocks"
